@@ -1,0 +1,42 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ===== 虚拟环境 =====
+.venv/
+venv/
+env/
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.swp
+*.sublime-*
+
+# ===== 运行产物（每次跑都会变，不入库）=====
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.csv
+data/*.xlsx
+logs/*.log
+logs/*.txt
+build/
+dist/
+*.spec
+
+# ===== 课程材料（版权原因不入公开仓库）=====
+*.doc
+*.docx
+*.pdf
+!tests/**/*.pdf
+报告/
+
+# ===== 系统文件 =====
+Thumbs.db
+desktop.ini
+.DS_Store
