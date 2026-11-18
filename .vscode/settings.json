@@ -1,0 +1,19 @@
+{
+  // 让 VSCode / Pylance 使用项目自带的虚拟环境，否则会报
+  // "Import \"requests\" could not be resolved"（中文：无法解析导入）
+  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+  "python.terminal.activateEnvironment": true,
+
+  // 把项目根目录加入分析路径，方便以后 import crawler / ui
+  "python.analysis.extraPaths": ["${workspaceFolder}"],
+
+  // pytest（第 2 周开始用）
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["tests"],
+
+  // 中文注释与 Windows 换行容易踩坑，统一成 UTF-8 + LF
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+
+  "editor.rulers": [100]
+}
