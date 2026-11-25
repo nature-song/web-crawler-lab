@@ -7,6 +7,7 @@
 界面那边**不直接操作控件**，只从队列里取，避免跨线程改 Tk 控件导致崩溃。
 """
 
+import contextlib
 import logging
 import sys
 from pathlib import Path
@@ -23,7 +24,7 @@ class EventHandler(logging.Handler):
         self.event_queue = event_queue
 
     def emit(self, record: logging.LogRecord) -> None:
-        try:
+        with contextlib.suppress(Exception):   # 队列满了/关了都不该影响爬虫本身
             self.event_queue.put(
                 {
                     "type": "log",
@@ -34,8 +35,6 @@ class EventHandler(logging.Handler):
                     },
                 }
             )
-        except Exception:      # 队列满了/关了都不该影响爬虫本身
-            pass
 
 
 def setup_logger(

@@ -15,23 +15,23 @@ def store(tmp_path):
 
 
 def make_page(url="http://a.com/1", **overrides) -> Page:
-    data = dict(
-        url=url,
-        title="测试标题",
-        authors="张三",
-        abstract="这是摘要",
-        keywords="关键词",
-        publish_date="2025-03-14",
-        site="a.com",
-        content_type="text/html",
-        http_status=200,
-        depth=1,
-        parent_url="http://a.com/",
-        fetched_at="2025-11-25 10:00:00",
-        elapsed_ms=120,
-        ok=True,
-        error="",
-    )
+    data = {
+        "url": url,
+        "title": "测试标题",
+        "authors": "张三",
+        "abstract": "这是摘要",
+        "keywords": "关键词",
+        "publish_date": "2025-03-14",
+        "site": "a.com",
+        "content_type": "text/html",
+        "http_status": 200,
+        "depth": 1,
+        "parent_url": "http://a.com/",
+        "fetched_at": "2025-11-25 10:00:00",
+        "elapsed_ms": 120,
+        "ok": True,
+        "error": "",
+    }
     data.update(overrides)
     return Page(**data)
 

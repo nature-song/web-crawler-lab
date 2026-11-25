@@ -27,7 +27,6 @@ class ParamPanel(ttk.Frame):
         self.interval_var = tk.DoubleVar(value=1.0)
         self.same_domain_var = tk.BooleanVar(value=True)
         self.robots_var = tk.BooleanVar(value=True)
-        self.download_pdf_var = tk.BooleanVar(value=False)
         self._inputs: list = []
         self._build()
 
@@ -60,7 +59,6 @@ class ParamPanel(ttk.Frame):
         for text, var in (
             ("仅本站", self.same_domain_var),
             ("遵守 robots", self.robots_var),
-            ("下载 PDF", self.download_pdf_var),
         ):
             check = ttk.Checkbutton(third, text=text, variable=var)
             check.pack(side="left", padx=(0, 16))
@@ -90,7 +88,6 @@ class ParamPanel(ttk.Frame):
             interval=self._float(self.interval_var, "间隔"),
             same_domain=self.same_domain_var.get(),
             respect_robots=self.robots_var.get(),
-            download_pdf=self.download_pdf_var.get(),
         )
 
     @staticmethod

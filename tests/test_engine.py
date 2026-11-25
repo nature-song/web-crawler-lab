@@ -45,13 +45,13 @@ def build(tmp_path):
     created = []
 
     def _build(route, robots_text="", **overrides):
-        data = dict(
-            seeds=[f"{BASE}/"],
-            workers=1,
-            interval=0.1,
-            db_path=str(tmp_path / "crawl.db"),
-            log_path=str(tmp_path / "crawl.log"),
-        )
+        data = {
+            "seeds": [f"{BASE}/"],
+            "workers": 1,
+            "interval": 0.1,
+            "db_path": str(tmp_path / "crawl.db"),
+            "log_path": str(tmp_path / "crawl.log"),
+        }
         data.update(overrides)
         cfg = CrawlConfig(**data)
         storage = Storage(cfg.db_path)
@@ -187,3 +187,23 @@ def test_rerun_counts_duplicates(build):
     assert engine_again.stats.fetched == 0
     assert engine_again.stats.dup == 1
     assert storage.count() == 1
+
+def test_crawl_delay_from_robots_is_applied(build):
+    route = {f"{BASE}/": html()}
+    engine, _ = build(route, robots_text="User-agent: *\nCrawl-delay: 2\n")
+    engine.run()
+    assert engine.limiter.interval_for("test.local") == 2.0
+
+
+def test_429_slows_down_domain(build):
+    route = {f"{BASE}/": FetchResult(f"{BASE}/", "error", 429, error="HTTP 429")}
+    engine, _ = build(route)
+    engine.run()
+    assert engine.limiter.interval_for("test.local") > engine.cfg.interval
+
+
+def test_crawl_log_records_lifecycle(build):
+    route = {f"{BASE}/": html()}
+    engine, storage = build(route)
+    engine.run()
+    assert storage.count_log() >= 2

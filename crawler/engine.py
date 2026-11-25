@@ -145,6 +145,11 @@ class CrawlEngine:
                 self.frontier.push(Task(url=url, depth=0))
         log.info("开始爬取：种子 %s 个，策略 %s，上限 %s 页",
                  len(self.cfg.seeds), self.cfg.strategy, self.cfg.max_pages)
+        self.storage.log_event(
+            "INFO", "start",
+            f"strategy={self.cfg.strategy} max={self.cfg.max_pages} "
+            f"seeds={len(self.cfg.seeds)}",
+        )
         self._emit("state", "running")
 
     def _shutdown(self) -> None:
@@ -156,6 +161,12 @@ class CrawlEngine:
         log.info("爬取结束：成功 %s，失败 %s，PDF %s，去重 %s，用时 %.1fs",
                  self.stats.fetched, self.stats.failed, self.stats.pdf,
                  self.frontier.dup, elapsed)
+        self.storage.log_event(
+            "INFO", "finish",
+            f"fetched={self.stats.fetched} failed={self.stats.failed} "
+            f"pdf={self.stats.pdf} dup={self.frontier.dup}",
+            elapsed_ms=int(elapsed * 1000),
+        )
         self._emit("done", self.snapshot())
         self._emit("state", "finished")
 
@@ -189,6 +200,9 @@ class CrawlEngine:
             return WorkResult(task, blocked=True)
 
         host = host_of(task.url)
+        delay = self.robots.delay_for(task.url)
+        if delay:                       # robots 里写了 Crawl-delay 就以它为准
+            self.limiter.ensure_interval(host, delay)
         self.limiter.wait(host)
 
         fetch = self._fetcher().fetch(task.url)
@@ -227,10 +241,15 @@ class CrawlEngine:
         if fetch.kind == "error":
             self.stats.failed += 1
             log.warning("抓取失败 %s (%s)", fetch.url, fetch.error)
+            if fetch.status == 429:     # 被限流了，把这个域名放慢一点
+                self.limiter.slow_down(host_of(fetch.url))
+            self.storage.log_event("WARN", "fetch_error", fetch.error, fetch.url)
             return
         if fetch.kind == "pdf":
             self.stats.pdf += 1
-            self.storage.save_pdf(fetch.url, result.task.parent or "", result.task.anchor, result.task.depth)
+            self.storage.save_pdf(
+                fetch.url, result.task.parent or "", result.task.anchor, result.task.depth
+            )
             log.info("PDF %s", fetch.url)
             return
         if fetch.kind == "other":

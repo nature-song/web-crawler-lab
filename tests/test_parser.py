@@ -103,3 +103,10 @@ def test_empty_page(parser):
 )
 def test_normalize_date(text, want):
     assert normalize_date(text) == want
+
+
+def test_long_page_date_beyond_cap_is_ignored(parser):
+    padding = "填充文字" * 1200          # 远超 3000 字的正文
+    page, _ = parser.parse(f"<html><body><p>{padding}</p><p>2020-01-02</p></body></html>",
+                           "http://a.com/x")
+    assert page.publish_date == ""

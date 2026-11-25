@@ -4,7 +4,7 @@
 
 ## 项目是什么
 
-《网络系统实践》课程作业，选题一：带图形界面的网络爬虫。单人开发，共 5 周，目前在第 2 周。
+《网络系统实践》课程作业，选题一：带图形界面的网络爬虫。单人开发。**v1 已打通完整闭环，正在做 v2（见 docs/03-项目现状与差距分析.md）**。
 
 **硬性要求（来自教学大纲，不可删减）**：三种爬取策略至少一种、robots 遵守、URL 去重、PDF 链接处理、六字段抽取、限速、日志、图形界面启停与状态展示。
 
@@ -34,7 +34,7 @@ crawler/     核心引擎，纯 Python，不含任何界面代码
 ui/          Tkinter 界面，只负责显示与收集输入
   app.py       主窗口：布局 + 状态机 + 事件桥（queue + after）
   widgets.py   参数 / 统计 / 日志 / 结果表 四个面板
-tests/       pytest，93 个用例
+tests/       pytest，97 个用例
 ```
 
 **依赖方向**：`ui → crawler`，反向禁止。`crawler` 内部所有模块只能 import `models / config / url_utils`。
@@ -44,6 +44,7 @@ tests/       pytest，93 个用例
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q     # 跑测试，必须全绿才算完成
 .\.venv\Scripts\python.exe -m pytest tests/test_fetcher.py -v
+.\.venv\Scripts\python.exe -m ruff check crawler ui tests run.py   # 静态检查必须零错误
 git add -A; git commit -m "feat: ..."; git push
 ```
 
@@ -57,8 +58,9 @@ git add -A; git commit -m "feat: ..."; git push
 
 ## 当前进度与下一步
 
-已完成：核心引擎 + Tkinter 界面（含 93 个测试），两种入口都能跑：`python run.py` 或 `python -m crawler.cli`。
-下一步：本地测试站点 → 三策略/限速实验 → 报告与答辩。
+已完成：核心引擎 + Tkinter 界面（97 个测试、覆盖率 88%、ruff 零告警），两种入口：`python run.py` / `python -m crawler.cli`。
+下一步：按 docs/03 的 v2 批次推进（参数持久化 → 筛选排序/断点续爬 → 主题与打包 → 演示站点与图表）。
+质量基线：pytest 全绿 + `python -m ruff check crawler ui tests run.py` 零错误，缺一不可。
 
 ## 不要做的事
 

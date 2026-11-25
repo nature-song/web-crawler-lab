@@ -11,6 +11,7 @@
   - 5xx 或网络错误：也放行，但记一条 warning。这个取舍写进报告的局限性里。
 """
 
+import contextlib
 import logging
 import re
 import threading
@@ -88,10 +89,8 @@ def parse_robots(text: str) -> list[Group]:
                 continue            # "Disallow:" 空值等于没有限制
             current.rules.append(Rule(key == "allow", value))
         elif key == "crawl-delay" and current is not None:
-            try:
+            with contextlib.suppress(ValueError):
                 current.delay = float(value)
-            except ValueError:
-                pass
     return groups
 
 

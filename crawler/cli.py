@@ -54,7 +54,8 @@ def main(argv: list[str] | None = None) -> int:
     with Storage(cfg.db_path) as storage:
         engine = CrawlEngine(cfg, storage=storage)
         engine.run()
-        print(f"\n完成：数据库 {cfg.db_path} 共 {storage.count()} 条，PDF 链接 {storage.count_pdf()} 条")
+        print(f"\n完成：{cfg.db_path} 共 {storage.count()} 条，"
+              f"PDF 链接 {storage.count_pdf()} 条")
         if args.csv:
             saved = storage.export_csv(args.csv)
             print(f"已导出 {saved} 条到 {args.csv}")

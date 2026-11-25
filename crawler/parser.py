@@ -114,6 +114,22 @@ def _authors(index: dict[str, list[str]]) -> str:
     return "; ".join(names)
 
 
+def _first_text(soup, limit: int = 3000) -> str:
+    """只拼前 limit 个字符的正文。
+
+    直接用 soup.get_text() 会把整页（可能几 MB）先拼成一个字符串再切片，
+    大页面上很浪费，所以边遍历边累计长度。
+    """
+    parts: list[str] = []
+    size = 0
+    for text in soup.stripped_strings:
+        parts.append(text)
+        size += len(text)
+        if size >= limit:
+            break
+    return " ".join(parts)[:limit]
+
+
 def _publish_date(soup, index: dict[str, list[str]]) -> str:
     for key in DATE_KEYS:
         for value in index.get(key, []):
@@ -127,7 +143,7 @@ def _publish_date(soup, index: dict[str, list[str]]) -> str:
             return date
 
     # 最后的兜底：正文开头常有"发布时间：2025-03-14"，只扫前 3000 字，别把整页翻一遍
-    return normalize_date(soup.get_text(" ", strip=True)[:3000])
+    return normalize_date(_first_text(soup))
 
 
 def _abstract(soup, index: dict[str, list[str]]) -> str:

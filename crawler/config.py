@@ -18,8 +18,6 @@ class CrawlConfig:
     user_agent: str = "CourseCrawler/1.0 (student project)"
     db_path: str = "data/crawl.db"
     log_path: str = "logs/crawl.log"
-    download_pdf: bool = False
-    max_pdf_mb: int = 5
 
     def validate(self) -> tuple[bool, str]:
         """返回 (是否合法, 错误信息)。错误信息直接给界面弹窗用。"""

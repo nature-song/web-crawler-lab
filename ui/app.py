@@ -151,7 +151,11 @@ class CrawlApp(tk.Tk):
         )
         if not path:
             return
-        saved = self.storage.export_csv(path)
+        try:
+            saved = self.storage.export_csv(path)
+        except OSError as exc:              # 文件被 Excel 占用之类
+            messagebox.showerror("导出失败", f"写文件失败：{exc}")
+            return
         self.log_panel.append("INFO", f"已导出 {saved} 条到 {path}")
         messagebox.showinfo("导出完成", f"已导出 {saved} 条记录到：\n{path}")
 

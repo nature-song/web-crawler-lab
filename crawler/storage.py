@@ -100,7 +100,10 @@ class Storage:
 
     def save(self, page: Page) -> bool:
         """写一页。URL 已存在时返回 False（被忽略），新写入返回 True。"""
-        values = tuple(getattr(page, column) if column != "ok" else int(page.ok) for column in COLUMNS)
+        values = tuple(
+            getattr(page, column) if column != "ok" else int(page.ok)
+            for column in COLUMNS
+        )
         url_hash = hashlib.sha1(page.url.encode("utf-8")).hexdigest()
 
         with self._lock:
@@ -118,8 +121,8 @@ class Storage:
     def save_pdf(self, url: str, found_on: str = "", anchor: str = "", depth: int = 0) -> bool:
         with self._lock:
             cursor = self.conn.execute(
-                "INSERT OR IGNORE INTO pdf_links (url, found_on, anchor, depth, found_at)"
-                " VALUES (?, ?, ?, ?, ?)",
+                "INSERT OR IGNORE INTO pdf_links"
+                " (url, found_on, anchor, depth, found_at) VALUES (?, ?, ?, ?, ?)",
                 (url, found_on, anchor, depth, _now()),
             )
             self._pending += 1
@@ -133,6 +136,20 @@ class Storage:
         with self._lock:
             self.conn.commit()
             self._pending = 0
+
+    def log_event(self, level: str, event: str, detail: str = "",
+                  url: str = "", elapsed_ms: int = 0) -> None:
+        """把关键事件写进 crawl_log 表。只记开始/结束/失败，不记每一页，避免拖慢抓取。"""
+        with self._lock:
+            self.conn.execute(
+                "INSERT INTO crawl_log (ts, level, url, event, detail, elapsed_ms)"
+                " VALUES (?, ?, ?, ?, ?, ?)",
+                (_now(), level, url, event, detail, elapsed_ms),
+            )
+            self.conn.commit()
+
+    def count_log(self) -> int:
+        return self.conn.execute("SELECT COUNT(*) FROM crawl_log").fetchone()[0]
 
     # ---- 查询与导出 ----
 

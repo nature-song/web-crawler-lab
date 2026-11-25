@@ -32,5 +32,12 @@ class DomainRateLimiter:
             current = self._overrides.get(host, self.interval)
             self._overrides[host] = min(current * factor, ceiling)
 
+    def ensure_interval(self, host: str, minimum: float) -> None:
+        """robots.txt 的 Crawl-delay 比界面设置更慢时，以站点要求为准。"""
+        with self._lock:
+            current = self._overrides.get(host, self.interval)
+            if minimum > current:
+                self._overrides[host] = min(minimum, 10.0)
+
     def interval_for(self, host: str) -> float:
         return self._overrides.get(host, self.interval)
