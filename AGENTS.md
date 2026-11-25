@@ -32,7 +32,9 @@ crawler/     核心引擎，纯 Python，不含任何界面代码
   engine.py    调度主循环（线程池 + 统计）
   cli.py       命令行入口：python -m crawler.cli
 ui/          Tkinter 界面，只负责显示与收集输入
-tests/       pytest，92 个用例
+  app.py       主窗口：布局 + 状态机 + 事件桥（queue + after）
+  widgets.py   参数 / 统计 / 日志 / 结果表 四个面板
+tests/       pytest，93 个用例
 ```
 
 **依赖方向**：`ui → crawler`，反向禁止。`crawler` 内部所有模块只能 import `models / config / url_utils`。
@@ -55,8 +57,8 @@ git add -A; git commit -m "feat: ..."; git push
 
 ## 当前进度与下一步
 
-已完成：核心引擎全部模块（含 92 个测试），命令行可跑通：`python -m crawler.cli --seed URL --max 5`。
-下一步：`ui/`（Tkinter 界面）→ 本地测试站点 → 真实站点实验数据。
+已完成：核心引擎 + Tkinter 界面（含 93 个测试），两种入口都能跑：`python run.py` 或 `python -m crawler.cli`。
+下一步：本地测试站点 → 三策略/限速实验 → 报告与答辩。
 
 ## 不要做的事
 

@@ -173,3 +173,17 @@ def test_stop_before_run(build):
     engine.run()
     assert engine.stats.fetched == 0
     assert storage.count() == 0
+
+
+def test_rerun_counts_duplicates(build):
+    route = {f"{BASE}/": html()}
+    engine, storage = build(route)
+    engine.run()
+
+    engine_again, _ = build(route)      # 同一个库文件，模拟重复跑同一批
+    engine_again.run()
+
+    assert engine.stats.fetched == 1
+    assert engine_again.stats.fetched == 0
+    assert engine_again.stats.dup == 1
+    assert storage.count() == 1

@@ -116,6 +116,10 @@ class CrawlEngine:
         self._pause.clear()
         self._emit("state", "running")
 
+    def request_stop(self) -> None:
+        """只发停止信号，不等线程结束。界面用这个，避免主线程被 join 卡住。"""
+        self._stop.set()
+
     def stop(self) -> None:
         self._stop.set()
         if self._thread and self._thread.is_alive():
@@ -128,7 +132,6 @@ class CrawlEngine:
     def snapshot(self) -> dict:
         """给界面用的统计快照。"""
         self.stats.queued = len(self.frontier)
-        self.stats.dup = self.frontier.dup
         return asdict(self.stats)
 
     # ---- 内部：准备与收尾 ----
@@ -250,7 +253,9 @@ class CrawlEngine:
 
         inserted = self.storage.save(page)
         if not inserted:
+            # 库里已经有这个 URL（比如重跑同一批），不算失败也不算新增
             self.stats.dup += 1
+            log.debug("已存在，跳过 %s", page.url)
             return
         if page.ok:
             self.stats.fetched += 1
