@@ -17,12 +17,12 @@
 | HTTP 抓取 | `crawler/fetcher.py` | 超时、重试、编码识别、类型判定 | ✅ | 10 |
 | robots | `crawler/robots.py` | 抓取、解析、缓存（含 `*` `$` 通配符） | ✅ | 9 |
 | 限速 | `crawler/ratelimit.py` | 按域名控制请求间隔 | ✅ | 3 |
-| 信息抽取 | `crawler/parser.py` | 六字段抽取 + 抽新链接 | ⬜ 下一步 | — |
+| 信息抽取 | `crawler/parser.py` | 六字段抽取 + 抽新链接 | ✅ | 17 |
 | 存储 | `crawler/storage.py` | SQLite 建表、写入、导出 | ⬜ | — |
 | 调度引擎 | `crawler/engine.py` | 取任务→抓取→解析→入库→入队 | ⬜ | — |
 | 图形界面 | `ui/app.py` | 参数面板、启停、日志、表格 | ⬜ | — |
 
-**当前 54 个单元测试全部通过。**
+**当前 71 个单元测试全部通过。**
 
 ## 二、目录结构
 
@@ -122,10 +122,9 @@ VSCode 里在行号左边点一下出现红点 → 按 `F5` → 程序停在那�
 
 ## 七、下一步
 
-1. `parser.py`：六字段抽取（meta 优先 → DOM 兜底 → 正则）+ 抽新链接
-2. `storage.py`：SQLite 建表、批量写入、CSV 导出
-3. `logger.py` + `engine.py`：调度主循环，命令行版本跑通
-4. `ui/`：Tkinter 界面
+1. `storage.py`：SQLite 建表、批量写入、CSV 导出
+2. `logger.py` + `engine.py`：调度主循环，命令行版本跑通
+3. `ui/`：Tkinter 界面
 
 ## 八、合规说明
 

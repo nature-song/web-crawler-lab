@@ -27,7 +27,7 @@ crawler/     核心引擎，纯 Python，不含任何界面代码
   robots.py    robots.txt 解析（自研，支持 * 和 $）
   ratelimit.py 按域名限速
 ui/          Tkinter 界面，只负责显示与收集输入
-tests/       pytest，54 个用例
+tests/       pytest，71 个用例
 ```
 
 **依赖方向**：`ui → crawler`，反向禁止。`crawler` 内部所有模块只能 import `models / config / url_utils`。
@@ -50,8 +50,8 @@ git add -A; git commit -m "feat: ..."; git push
 
 ## 当前进度与下一步
 
-已完成：config、url_utils、frontier、fetcher、robots、ratelimit（含 54 个测试）。
-下一步：`parser.py`（六字段抽取）→ `storage.py`（SQLite）→ `logger.py` → `engine.py`（命令行能跑）→ `ui/`。
+已完成：config、url_utils、frontier、fetcher、robots、ratelimit、parser（含 71 个测试）。
+下一步：`storage.py`（SQLite）→ `logger.py` → `engine.py`（命令行能跑）→ `ui/`。
 
 ## 不要做的事
 
