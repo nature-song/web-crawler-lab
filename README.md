@@ -93,6 +93,7 @@ python run_web.py
 | `Activate.ps1` | 让这个终端里的 `python` 指向 `.venv` 里的解释器 |
 | `pip install -r requirements.txt` | 按清单把 requests / bs4 / lxml / pytest 装上 |
 | `python -m pytest -q` | 运行 `tests/` 里所有测试，`-q` 表示少打印点 |
+| `python run_web.py` | 启动本地 Web 服务（默认 127.0.0.1:5000），用浏览器打开 |
 
 > 不想激活也行：把 `python` 换成 `.\.venv\Scripts\python.exe` 即可，效果一样。
 

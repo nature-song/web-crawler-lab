@@ -47,7 +47,8 @@ tests/       pytest，106 个用例
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q     # 跑测试，必须全绿才算完成
 .\.venv\Scripts\python.exe -m pytest tests/test_fetcher.py -v
-.\.venv\Scripts\python.exe -m ruff check crawler ui tests run.py   # 静态检查必须零错误
+.\.venv\Scripts\python.exe -m ruff check crawler ui web tests run.py run_web.py   # 静态检查必须零错误
+.\.venv\Scripts\python.exe run_web.py --help 2>$null; # 启动 Web：python run_web.py
 git add -A; git commit -m "feat: ..."; git push
 ```
 
@@ -64,7 +65,7 @@ git add -A; git commit -m "feat: ..."; git push
 已完成：核心引擎 + Tkinter 桌面版 + Flask Web 版（106 个测试、ruff 零告警）。
 三个入口：`python run_web.py`（浏览器）/ `python run.py`（桌面）/ `python -m crawler.cli`（命令行）。
 下一步：按 docs/04 产品设计的 M2 → M5 推进（数据检索 → 看板与任务历史 → 增量采集 → 打磨）。
-质量基线：pytest 全绿 + `python -m ruff check crawler ui tests run.py` 零错误，缺一不可。
+质量基线：pytest 全绿 + `python -m ruff check crawler ui web tests run.py run_web.py` 零错误，缺一不可。
 
 ## 不要做的事
 
