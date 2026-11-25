@@ -1,123 +1,132 @@
 # 网络爬虫实验系统
 
-> 《网络系统实践》（950012Z11）课程实践 · **选题一：网络爬虫的设计与实现**
-> 一个带图形界面的教学用网络爬虫：请求队列调度、三种爬取策略、robots 协议遵守、按域名限速、结构化信息抽取、SQLite 持久化。
+《网络系统实践》（950012Z11）选题一：**带图形界面的教学用网络爬虫**。
+按策略爬网页、遵守 robots.txt、按域名限速、抽取标题/作者/摘要/关键词/时间/URL，存进 SQLite，最后在界面上看结果并导出。
+
+技术栈：Python 3.14 + Tkinter + requests + BeautifulSoup + SQLite。**不使用 Scrapy**，调度、去重、限速全部手写（课程要求）。
 
 ---
 
-## 一、目标与范围
+## 一、现在做到哪了
 
-严格对照教学大纲"五、实践教学内容 → 实践选题（1）"的四条要求设计：
+| 模块 | 文件 | 作用 | 状态 | 测试 |
+|---|---|---|---|---|
+| 参数配置 | `crawler/config.py` | 所有参数集中定义 + 合法性校验 | ✅ | 9 |
+| URL 工具 | `crawler/url_utils.py` | 规范化、同域判断、后缀过滤 | ✅ | 16 |
+| 请求队列 | `crawler/frontier.py` | BFS / DFS / 最佳优先 + 去重 | ✅ | 7 |
+| HTTP 抓取 | `crawler/fetcher.py` | 超时、重试、编码识别、类型判定 | ✅ | 10 |
+| robots | `crawler/robots.py` | 抓取、解析、缓存（含 `*` `$` 通配符） | ✅ | 9 |
+| 限速 | `crawler/ratelimit.py` | 按域名控制请求间隔 | ✅ | 3 |
+| 信息抽取 | `crawler/parser.py` | 六字段抽取 + 抽新链接 | ⬜ 下一步 | — |
+| 存储 | `crawler/storage.py` | SQLite 建表、写入、导出 | ⬜ | — |
+| 调度引擎 | `crawler/engine.py` | 取任务→抓取→解析→入库→入队 | ⬜ | — |
+| 图形界面 | `ui/app.py` | 参数面板、启停、日志、表格 | ⬜ | — |
 
-| # | 大纲要求 | 本项目的实现方案 | 状态 |
-|---|---|---|---|
-| 1 | 基于请求队列的广度 / 深度 / 最佳优先策略（至少实现一种以上） | `Frontier` 抽象：`deque` 实现 FIFO(BFS)/LIFO(DFS)，`heapq` 实现优先级队列；界面可实时切换 | 待实现 |
-| 1 | Robots 协议解析与遵守 | 自抓 `robots.txt`（带 UA/超时）→ `RobotFileParser.parse()` → 按 host 缓存 + TTL，并补上标准库缺失的 `*`/`$` 通配符匹配 | 待实现 |
-| 1 | URL 去重、PDF 链接处理 | 8 条规则的 URL 规范化 + 哈希集合去重 + 数据库 `UNIQUE` 双保险；PDF 三重判定后单独记账，不参与 HTML 解析 | 待实现 |
-| 2 | 提取标题、作者、摘要、关键词、发表时间、URL 并保存 | "元数据优先（citation_*/DC.*/og:*）+ DOM 兜底 + 正则日期"三级抽取链，写入 SQLite，支持导出 CSV/Excel | 待实现 |
-| 3 | 爬取速率控制（请求间隔） | 按域名的 `DomainRateLimiter`（锁内预约时间片、锁外睡眠）+ 线程池并发上限 | 待实现 |
-| 3 | 监控爬取状态、记录爬取日志 | 界面实时统计（已抓/待抓/失败/去重/robots 拦截/PDF）+ 滚动日志文件 | 待实现 |
-| 3 | 异常处理（网络异常、解析失败） | 超时/连接失败/429/403/5xx 分类处理 + 指数退避重试 + 单页解析异常兜底 | 待实现 |
-| 4 | 图形界面友好、可控开始结束、显示状态与结果 | Tkinter + ttk：参数面板、开始/暂停/停止、进度条、实时日志、结果表格、导出 | 待实现 |
+**当前 54 个单元测试全部通过。**
 
-> 状态图例：`待实现` / `进行中` / `已完成`。全部完成后本表即为验收清单。
-
-## 二、技术栈
-
-| 层 | 选型 | 理由 |
-|---|---|---|
-| 语言 | Python 3.14 | 爬虫生态成熟；课程允许；开发效率高 |
-| GUI | Tkinter + ttk | 标准库自带，零安装、零版本冲突，现场演示最稳 |
-| HTTP | `requests` | 会话复用、超时/重试控制清晰 |
-| 解析 | `beautifulsoup4`（`lxml` 加速） | 对残缺 HTML 容错好 |
-| 存储 | `sqlite3` | 标准库自带，单文件随项目拷走 |
-| 并发 | `threading` + `ThreadPoolExecutor` | 爬虫是 IO 密集型，GIL 不是瓶颈 |
-| 测试 | `pytest` | 单元测试 + 集成测试 |
-
-**不使用 Scrapy**：本实验考核重点是队列、去重、限速、解析这些"轮子"本身的实现，框架会把这些变成配置项，既不利于学习，也无法在报告中阐述算法设计。
-
-## 三、快速开始
-
-环境要求：Windows + Python 3.10 以上（推荐 3.14）。
-
-```powershell
-# 1. 创建并激活虚拟环境
-py -3.14 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-# 2. 安装依赖（国内可用清华源）
-python -m pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-# 3. 跑单元测试（当前 32 个用例）
-python -m pytest -q
-
-# 4. 启动（开发完成后）
-python run.py
-```
-
-## 四、目录结构
+## 二、目录结构
 
 ```
 .
-├─ run.py                   # 唯一入口
-├─ requirements.txt         # 依赖清单
-├─ crawler/                 # 爬虫核心包
-│  ├─ config.py             # 参数集中定义与校验
+├─ run.py                   # 程序入口（界面做好后才有内容）
+├─ requirements.txt         # 需要安装的第三方包清单
+├─ crawler/                 # 爬虫核心（不含界面，可单独跑）
+│  ├─ config.py             # 参数定义与校验
+│  ├─ models.py             # 共享数据结构：Task / Page / FetchResult / Stats
 │  ├─ url_utils.py          # URL 规范化、过滤
-│  ├─ frontier.py           # 队列 + 去重 + 三种策略
+│  ├─ frontier.py           # 请求队列与三种策略
+│  ├─ fetcher.py            # HTTP 抓取
 │  ├─ robots.py             # robots.txt 解析与缓存
-│  ├─ ratelimit.py          # 按域限速
-│  ├─ fetcher.py            # HTTP 请求与重试
-│  ├─ parser.py             # 六字段抽取
-│  ├─ storage.py            # SQLite
-│  ├─ logger.py             # 日志
-│  └─ engine.py             # 调度主循环
-├─ ui/                      # Tkinter 界面
-├─ tests/                   # pytest 用例 + 本地测试站点
-├─ data/                    # crawl.db（不入库）
-├─ logs/                    # 运行日志（不入库）
-├─ docs/                    # 需求分析、体系设计等文档
-└─ 实验规划-网络爬虫.md      # 五周实施规划、算法详解、报告模板
+│  ├─ ratelimit.py          # 按域名限速
+│  └─ logger.py             # 日志（待写）
+├─ ui/                      # 图形界面
+├─ tests/                   # 单元测试，test_*.py 会被自动收集
+├─ docs/                    # 设计文档、命令手册
+├─ data/                    # crawl.db（运行后生成，不进 git）
+└─ logs/                    # 运行日志（不进 git）
 ```
 
-## 五、开发路线
+## 三、快速开始
 
-- [x] **W1** 基础模块：参数配置、URL 规范化、三种策略队列 + 32 个单元测试
-- [ ] **W1** 命令行最小爬虫：HTTP 抓取 → 抽链接 → BFS 队列 → 去重 → 深度限制
-- [ ] **W1** robots.txt 解析与遵守、按域限速、日志与异常分类
-- [ ] **W2** 六字段抽取（元数据优先 + DOM 兜底）、SQLite 落库、CSV 导出
-- [ ] **W2** DFS 与最佳优先策略、线程池并发
-- [ ] **W3** GUI：布局、事件桥（`queue` + `after`）、状态机、实时日志与结果表格
-- [ ] **W3** 稳定性专项：连启停 10 次、长跑 30 分钟、爬取中关窗
-- [ ] **W4** 本地测试站点 + 20 条功能测试用例
-- [ ] **W4** 三策略对比实验、限速实验、图表
-- [ ] **W5** 实践报告与答辩材料
+```powershell
+# 1. 进项目目录
+cd D:\userfiles\desktop\网络系统实践
 
-详细到"每天做什么、完成标志是什么"见 [实验规划](./实验规划-网络爬虫.md)。
+# 2. 激活虚拟环境（命令行前面出现 (.venv) 就成功了）
+.\.venv\Scripts\Activate.ps1
 
-## 六、设计文档
+# 3. 装依赖（已经装过就不用重复执行）
+python -m pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-| 文档 | 内容 | 对应课程目标 |
-|---|---|---|
-| [需求分析报告](./docs/01-需求分析报告.md) | 干系人与调研、用例、27 条功能需求、14 条非功能需求、追踪矩阵 | 课程目标 1、2 |
-| [体系设计报告](./docs/02-体系设计报告.md) | 分层架构、模块与接口、时序流程、数据库设计、界面设计、7 条 ADR | 课程目标 2、3、4 |
-| [实验规划](./实验规划-网络爬虫.md) | 五周路线、算法详解、测试方案、答辩 20 问 | 课程目标 7 |
+# 4. 跑测试，确认代码是好的
+python -m pytest -q
+```
 
-> 文档中的结构图使用 Mermaid 语法，在 GitHub 网页上可直接渲染；本地预览需 Markdown 插件（如 "Markdown Preview Mermaid Support"）。
+每条命令在干嘛：
 
-## 七、合规声明
+| 命令 | 作用 |
+|---|---|
+| `cd 路径` | 切换当前工作目录，后面的命令都在这个目录下执行 |
+| `Activate.ps1` | 让这个终端里的 `python` 指向 `.venv` 里的解释器 |
+| `pip install -r requirements.txt` | 按清单把 requests / bs4 / lxml / pytest 装上 |
+| `python -m pytest -q` | 运行 `tests/` 里所有测试，`-q` 表示少打印点 |
 
-本项目仅用于课程实验，遵循以下原则：
+> 不想激活也行：把 `python` 换成 `.\.venv\Scripts\python.exe` 即可，效果一样。
 
-- 遵守目标站点 `robots.txt`，被禁止的路径一律不抓；
-- 按域名限速（默认 1 请求/秒/域），并发不超过 4，避免对目标服务器造成压力；
-- 请求头携带可识别的 User-Agent，不伪装成浏览器；
-- 只抓取公开页面，不登录、不绕过验证码或付费墙，不采集个人信息；
-- 抓取数据仅用于课程分析，实验结束后清理原始网页快照，报告引用标注来源。
+## 四、怎么调试
 
-## 八、参考
+**① 跑测试（最常用）**
 
-- RFC 9309 — Robots Exclusion Protocol
-- Python 官方文档：`urllib.robotparser`、`sqlite3`、`tkinter`、`concurrent.futures`
-- requests / BeautifulSoup 官方文档
-- 詹姆斯·F. 库罗斯《计算机网络：自顶向下方法》（原书第 8 版）第 2 章
+```powershell
+python -m pytest -q                          # 全部，只看结果
+python -m pytest tests/test_robots.py -v     # 只跑 robots 的测试，-v 显示每个用例名
+python -m pytest tests/test_robots.py::test_wildcard_and_anchor -v   # 只跑一个用例
+```
+
+测试挂了会直接告诉你哪个断言不成立、期望值和实际值各是什么，按提示改代码即可。
+
+**② 交互式试函数**
+
+```powershell
+python -i -c "from crawler.url_utils import normalize_url; print(normalize_url('HTTP://A.com:80/x/../y'))"
+```
+
+`-i` 表示执行完不退出，停在 Python 提示符，可以接着敲别的表达式。
+
+**③ 打断点**
+
+VSCode 里在行号左边点一下出现红点 → 按 `F5` → 程序停在那行，鼠标悬停看变量值，`F10` 单步。
+
+**④ 看日志**
+
+运行后会写 `logs/crawl_YYYYMMDD.log`，每个失败请求都带 URL 和错误原因，排查"为什么这个页面没抓到"就靠它。
+
+## 五、代码约定
+
+1. **分层**：`ui` 可以 import `crawler`，`crawler` 绝不 import `ui`。所以爬虫核心可以脱离界面单独测。
+2. **数据结构集中在 `models.py`**，避免模块之间互相 import 形成环。
+3. **网络层不抛异常**：`Fetcher.fetch()` 一律返回 `FetchResult`，`kind="error"` 表示失败。调用方不用写 try/except。
+4. **可注入依赖**：`Fetcher(session=...)`、`RobotsCache(fetch_text=...)` 都能传假的，测试才不用连网。
+5. **注释写"为什么"**，不写"是什么"；能一眼看懂的地方不加注释。
+6. **一个文件一件事**，单个函数尽量不超过 40 行。
+
+## 六、文档索引
+
+| 文档 | 什么时候看 |
+|---|---|
+| [实验规划](实验规划-网络爬虫.md) | 想知道五周怎么排、算法怎么讲、答辩会问什么 |
+| [需求分析报告](docs/01-需求分析报告.md) | 想知道每条需求从哪来、怎么验收 |
+| [体系设计报告](docs/02-体系设计报告.md) | 想知道模块怎么划分、数据库怎么设计 |
+| [命令手册](docs/命令手册.md) | 终端命令看不懂的时候查 |
+| [AGENTS.md](AGENTS.md) | 换 AI 或换人接手时先看这个 |
+
+## 七、下一步
+
+1. `parser.py`：六字段抽取（meta 优先 → DOM 兜底 → 正则）+ 抽新链接
+2. `storage.py`：SQLite 建表、批量写入、CSV 导出
+3. `logger.py` + `engine.py`：调度主循环，命令行版本跑通
+4. `ui/`：Tkinter 界面
+
+## 八、合规说明
+
+只抓公开页面；遵守 robots.txt；默认 1 请求/秒/域；User-Agent 带项目标识；不采集个人信息；抓取结果仅用于课程实验。
