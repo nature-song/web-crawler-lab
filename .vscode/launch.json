@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Web 界面（F5 启动）",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_web.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "命令行爬取（示例参数）",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "crawler.cli",
+      "args": ["--seed", "https://www.python.org/", "--max", "5", "--depth", "1"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "当前测试文件",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${file}", "-v"],
+      "console": "integratedTerminal"
+    }
+  ]
+}

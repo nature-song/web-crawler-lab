@@ -11,6 +11,7 @@ import json
 import queue
 import re
 import threading
+import webbrowser
 from pathlib import Path
 
 from flask import Flask, Response, jsonify, request, send_from_directory
@@ -188,10 +189,26 @@ def create_app(service: CrawlService | None = None) -> Flask:
     return app
 
 
-def main(host: str = "127.0.0.1", port: int = 5000, debug: bool = False) -> None:
+def main(
+    host: str = "127.0.0.1",
+    port: int = 5000,
+    debug: bool = False,
+    open_browser: bool = True,
+) -> None:
     app = create_app()
-    print(f"界面地址： http://{host}:{port}")
-    app.run(host=host, port=port, debug=debug, threaded=True, use_reloader=False)
+    url = f"http://{host}:{port}"
+    print(f"界面地址： {url}")
+    print("按 Ctrl+C 停止服务")
+
+    if open_browser:
+        # 等 1 秒再开，避免浏览器比服务器先起来
+        threading.Timer(1.0, webbrowser.open, args=(url,)).start()
+
+    try:
+        app.run(host=host, port=port, debug=debug, threaded=True, use_reloader=False)
+    except OSError as exc:
+        print(f"\n启动失败：{exc}")
+        print(f"多半是端口 {port} 被占用，换一个试试： python run_web.py --port 5001")
 
 
 if __name__ == "__main__":
