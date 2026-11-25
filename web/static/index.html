@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>网络爬虫工作台</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◎</span>
+      <div>
+        <h1>网络爬虫工作台</h1>
+        <p class="sub">采集 · 清洗 · 检索 · 导出</p>
+      </div>
+    </div>
+    <div class="status">
+      <span id="state-pill" class="pill idle">空闲</span>
+      <span id="clock" class="clock">00:00</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="card params">
+      <h2>任务配置</h2>
+      <div class="field wide">
+        <label for="seeds">种子 URL</label>
+        <input id="seeds" type="text" value="https://www.python.org/" placeholder="多个地址用空格分隔">
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label for="strategy">策略</label>
+          <select id="strategy">
+            <option value="bfs">广度优先</option>
+            <option value="dfs">深度优先</option>
+            <option value="best">最佳优先</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="max_depth">深度</label>
+          <input id="max_depth" type="number" value="2" min="0" max="10">
+        </div>
+        <div class="field">
+          <label for="max_pages">页数上限</label>
+          <input id="max_pages" type="number" value="50" min="1" max="10000">
+        </div>
+        <div class="field">
+          <label for="workers">并发</label>
+          <input id="workers" type="number" value="4" min="1" max="8">
+        </div>
+        <div class="field">
+          <label for="interval">间隔（秒）</label>
+          <input id="interval" type="number" value="0.5" min="0.1" max="10" step="0.1">
+        </div>
+      </div>
+
+      <div class="switches">
+        <label><input id="same_domain" type="checkbox" checked> 仅本站</label>
+        <label><input id="respect_robots" type="checkbox" checked> 遵守 robots</label>
+      </div>
+
+      <div class="actions">
+        <button id="btn-start" class="primary">开始采集</button>
+        <button id="btn-pause" class="ghost" disabled>暂停</button>
+        <button id="btn-stop" class="ghost" disabled>停止</button>
+        <button id="btn-clear" class="ghost">清空结果</button>
+        <a id="btn-export" class="ghost link" href="/api/export.csv">导出 CSV</a>
+      </div>
+    </section>
+
+    <section class="card metrics">
+      <h2>运行状态</h2>
+      <div class="progress"><div id="progress-bar"></div></div>
+      <p class="progress-text"><span id="progress-text">0 / 0</span></p>
+      <div class="stat-grid">
+        <div class="stat"><span class="num" id="s-fetched">0</span><span class="label">已抓</span></div>
+        <div class="stat"><span class="num" id="s-queued">0</span><span class="label">待抓</span></div>
+        <div class="stat"><span class="num" id="s-failed">0</span><span class="label">失败</span></div>
+        <div class="stat"><span class="num" id="s-dup">0</span><span class="label">去重</span></div>
+        <div class="stat"><span class="num" id="s-blocked">0</span><span class="label">robots</span></div>
+        <div class="stat"><span class="num" id="s-pdf">0</span><span class="label">PDF</span></div>
+      </div>
+    </section>
+
+    <section class="card log-card">
+      <h2>运行日志 <span class="hint">最新 500 条</span></h2>
+      <div id="log" class="log"></div>
+    </section>
+
+    <section class="card table-card">
+      <h2>采集结果 <span id="row-count" class="hint">0 条</span></h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>标题</th><th>作者</th><th>时间</th><th>站点</th><th>URL</th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,9 +1,10 @@
 # 网络爬虫实验系统
 
-《网络系统实践》（950012Z11）选题一：**带图形界面的教学用网络爬虫**。
-按策略爬网页、遵守 robots.txt、按域名限速、抽取标题/作者/摘要/关键词/时间/URL，存进 SQLite，最后在界面上看结果并导出。
+《网络系统实践》（950012Z11）选题一：**带图形界面的网络爬虫**。
+按策略爬网页、遵守 robots.txt、按域名限速、抽取标题/作者/摘要/关键词/时间/URL，存进 SQLite，在界面上看结果并导出。
 
-技术栈：Python 3.14 + Tkinter + requests + BeautifulSoup + SQLite。**不使用 Scrapy**，调度、去重、限速全部手写（课程要求）。
+技术栈：Python 3.14 + Flask + 原生 HTML/CSS/JS + requests + BeautifulSoup + SQLite。
+**不使用 Scrapy**，调度、去重、限速全部手写（课程要求）；Tkinter 桌面版保留作为备用入口。
 
 ---
 
@@ -22,17 +23,25 @@
 | 日志 | `crawler/logger.py` | 文件 + 界面事件双通道 | ✅ | 2 |
 | 调度引擎 | `crawler/engine.py` | 取任务→抓取→解析→入库→入队 | ✅ | 9 |
 | 命令行 | `crawler/cli.py` | 不启动界面的入口 | ✅ | — |
-| 图形界面 | `ui/app.py` + `ui/widgets.py` | 参数面板、启停、进度、日志、结果表、导出 | ✅ | — |
+| 桌面界面 | `ui/app.py` + `ui/widgets.py` | Tkinter：参数、启停、进度、日志、结果表 | ✅ | — |
+| Web 界面 | `web/server.py` + `web/static/` | Flask + SSE：表单、实时日志、结果表、导出 | ✅ | 9 |
 
-**当前 97 个单元测试全部通过，ruff 零告警，覆盖率 88%。**
+**当前 106 个单元测试全部通过，ruff 零告警。**
 
-![界面预览](docs/ui-preview.png)
+Web 界面（主入口，`python run_web.py` 后浏览器打开 http://127.0.0.1:5000）：
+
+![Web 界面](docs/web-preview.png)
+
+桌面版（Tkinter，备用）：
+
+![桌面界面](docs/ui-preview.png)
 
 ## 二、目录结构
 
 ```
 .
-├─ run.py                   # 程序入口（界面做好后才有内容）
+├─ run_web.py               # 启动 Web 界面（主入口）
+├─ run.py                   # 启动桌面版（备用）
 ├─ requirements.txt         # 需要安装的第三方包清单
 ├─ crawler/                 # 爬虫核心（不含界面，可单独跑）
 │  ├─ config.py             # 参数定义与校验
@@ -47,7 +56,10 @@
 │  ├─ logger.py             # 日志（文件 + 界面事件）
 │  ├─ engine.py             # 调度主循环
 │  └─ cli.py                # 命令行入口
-├─ ui/                      # 图形界面
+├─ web/                     # Web 界面
+│  ├─ server.py             # Flask 路由、SSE 事件流、服务层
+│  └─ static/               # index.html / app.js / style.css
+├─ ui/                      # 桌面界面（Tkinter）
 ├─ tests/                   # 单元测试，test_*.py 会被自动收集
 ├─ docs/                    # 设计文档、命令手册
 ├─ data/                    # crawl.db（运行后生成，不进 git）
@@ -68,6 +80,9 @@ python -m pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/s
 
 # 4. 跑测试，确认代码是好的
 python -m pytest -q
+
+# 5. 启动 Web 界面，然后浏览器打开 http://127.0.0.1:5000
+python run_web.py
 ```
 
 每条命令在干嘛：
@@ -125,17 +140,18 @@ VSCode 里在行号左边点一下出现红点 → 按 `F5` → 程序停在那�
 | [实验规划](实验规划-网络爬虫.md) | 想知道五周怎么排、算法怎么讲、答辩会问什么 |
 | [需求分析报告](docs/01-需求分析报告.md) | 想知道每条需求从哪来、怎么验收 |
 | [体系设计报告](docs/02-体系设计报告.md) | 想知道模块怎么划分、数据库怎么设计 |
+| [产品设计](docs/04-产品设计.md) | 想知道 v2 要做成什么样、和市面工具有什么不同 |
 | [命令手册](docs/命令手册.md) | 终端命令看不懂的时候查 |
 | [AGENTS.md](AGENTS.md) | 换 AI 或换人接手时先看这个 |
 
 ## 七、下一步
 
-v1 已经打通"抓取→解析→入库→界面→导出"的完整闭环。接下来按《项目现状与差距分析》的 v2 路线推进：
+v1 打通了"抓取→解析→入库→界面→导出"的闭环，Web 界面（M1）已经能跑。接下来按《产品设计》的里程碑推进：
 
-1. **批 1 地基**：参数持久化、每域并发上限、任务历史
-2. **批 2 功能**：结果筛选排序、断点续爬、PDF 下载、Excel 导出
-3. **批 3 体验**：主题美化、进度 ETA、日志过滤、打包 exe
-4. **批 4 展示**：本地测试站点、策略对比模式、内嵌图表
+1. **M2 数据页**：检索（SQLite FTS5）、筛选、排序、详情、批量导出
+2. **M3 看板 + 任务历史**：`runs` 表、4 张统计图
+3. **M4 增量采集**：只抓新增、变更提醒、定时任务
+4. **M5 打磨**：空状态、打包 exe、本地演示站点
 
 ## 八、合规说明
 

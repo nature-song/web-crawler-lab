@@ -11,9 +11,9 @@
 ## 技术约束
 
 - Python 3.14，Windows，虚拟环境在 `.venv`（不要用系统 Python 3.9）
-- GUI 用 **Tkinter**，不用 PySide6/Qt
+- 界面：**Web（Flask + 原生 JS）为主入口**，Tkinter 桌面版保留为备用；不用 React/Vue（要 node 构建）
 - **不用 Scrapy 或任何爬虫框架**——课程考的就是手写队列/去重/限速
-- 依赖只有 requests、beautifulsoup4、lxml、pytest，新增依赖前先说明理由
+- 依赖只有 requests、beautifulsoup4、lxml、pytest、flask，新增依赖前先说明理由
 
 ## 代码结构
 
@@ -31,10 +31,13 @@ crawler/     核心引擎，纯 Python，不含任何界面代码
   logger.py    日志（文件 + 事件队列）
   engine.py    调度主循环（线程池 + 统计）
   cli.py       命令行入口：python -m crawler.cli
-ui/          Tkinter 界面，只负责显示与收集输入
+web/         Web 界面（主入口）
+  server.py   Flask 路由 + SSE 事件流 + CrawlService
+  static/     index.html / app.js / style.css（无构建链）
+ui/          Tkinter 桌面版，只负责显示与收集输入
   app.py       主窗口：布局 + 状态机 + 事件桥（queue + after）
   widgets.py   参数 / 统计 / 日志 / 结果表 四个面板
-tests/       pytest，97 个用例
+tests/       pytest，106 个用例
 ```
 
 **依赖方向**：`ui → crawler`，反向禁止。`crawler` 内部所有模块只能 import `models / config / url_utils`。
@@ -58,8 +61,9 @@ git add -A; git commit -m "feat: ..."; git push
 
 ## 当前进度与下一步
 
-已完成：核心引擎 + Tkinter 界面（97 个测试、覆盖率 88%、ruff 零告警），两种入口：`python run.py` / `python -m crawler.cli`。
-下一步：按 docs/03 的 v2 批次推进（参数持久化 → 筛选排序/断点续爬 → 主题与打包 → 演示站点与图表）。
+已完成：核心引擎 + Tkinter 桌面版 + Flask Web 版（106 个测试、ruff 零告警）。
+三个入口：`python run_web.py`（浏览器）/ `python run.py`（桌面）/ `python -m crawler.cli`（命令行）。
+下一步：按 docs/04 产品设计的 M2 → M5 推进（数据检索 → 看板与任务历史 → 增量采集 → 打磨）。
 质量基线：pytest 全绿 + `python -m ruff check crawler ui tests run.py` 零错误，缺一不可。
 
 ## 不要做的事
