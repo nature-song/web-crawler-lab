@@ -48,7 +48,8 @@ tests/       pytest，106 个用例
 .\.venv\Scripts\python.exe -m pytest -q     # 跑测试，必须全绿才算完成
 .\.venv\Scripts\python.exe -m pytest tests/test_fetcher.py -v
 .\.venv\Scripts\python.exe -m ruff check crawler ui web tests run.py run_web.py   # 静态检查必须零错误
-.\.venv\Scripts\python.exe run_web.py --help 2>$null; # 启动 Web：python run_web.py
+# 启动 Web 界面（前台运行，浏览器打开 http://127.0.0.1:5000）
+.\.venv\Scripts\python.exe run_web.py
 git add -A; git commit -m "feat: ..."; git push
 ```
 
