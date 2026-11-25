@@ -48,8 +48,8 @@ py -3.14 -m venv .venv
 # 2. 安装依赖（国内可用清华源）
 python -m pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-# 3. 环境自检（应输出 Python 版本、Tk 版本与两条 OK）
-python verify_env.py
+# 3. 跑单元测试（当前 32 个用例）
+python -m pytest -q
 
 # 4. 启动（开发完成后）
 python run.py
@@ -60,9 +60,9 @@ python run.py
 ```
 .
 ├─ run.py                   # 唯一入口
-├─ verify_env.py            # 环境自检脚本
-├─ requirements.txt
+├─ requirements.txt         # 依赖清单
 ├─ crawler/                 # 爬虫核心包
+│  ├─ config.py             # 参数集中定义与校验
 │  ├─ url_utils.py          # URL 规范化、过滤
 │  ├─ frontier.py           # 队列 + 去重 + 三种策略
 │  ├─ robots.py             # robots.txt 解析与缓存
@@ -82,6 +82,7 @@ python run.py
 
 ## 五、开发路线
 
+- [x] **W1** 基础模块：参数配置、URL 规范化、三种策略队列 + 32 个单元测试
 - [ ] **W1** 命令行最小爬虫：HTTP 抓取 → 抽链接 → BFS 队列 → 去重 → 深度限制
 - [ ] **W1** robots.txt 解析与遵守、按域限速、日志与异常分类
 - [ ] **W2** 六字段抽取（元数据优先 + DOM 兜底）、SQLite 落库、CSV 导出
